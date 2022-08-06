@@ -1,24 +1,23 @@
 package edu.coursera.parallel;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * A simple wrapper class for various analytics methods.
- */
 public final class StudentAnalytics {
 
   /**
    * Sequentially computes the average age of all actively enrolled students using loops.
    *
-   * @param studentArray Student data for the class.
+   * @param studentArray Student data for the class
    * @return Average age of enrolled students
    */
-  public double averageAgeOfEnrolledStudentsImperative(
-      final Student[] studentArray) {
-    List<Student> activeStudents = new ArrayList<Student>();
+  public double averageAgeOfEnrolledStudentsImperative(final Student[] studentArray) {
+    List<Student> activeStudents = new ArrayList<>();
 
     for (Student s : studentArray) {
       if (s.checkIsCurrent()) {
@@ -35,29 +34,28 @@ public final class StudentAnalytics {
   }
 
   /**
-   * TODO compute the average age of all actively enrolled students using
-   * parallel streams. This should mirror the functionality of
-   * averageAgeOfEnrolledStudentsImperative. This method should not use any
-   * loops.
+   * Compute the average age of all actively enrolled students using parallel streams. This should
+   * mirror the functionality of averageAgeOfEnrolledStudentsImperative. This method should not use
+   * any loops.
    *
-   * @param studentArray Student data for the class.
+   * @param studentArray Student data for the class
    * @return Average age of enrolled students
    */
-  public double averageAgeOfEnrolledStudentsParallelStream(
-      final Student[] studentArray) {
-    throw new UnsupportedOperationException();
+  public double averageAgeOfEnrolledStudentsParallelStream(final Student[] studentArray) {
+    return Stream.of(studentArray).parallel().filter(Student::checkIsCurrent)
+        .mapToDouble(Student::getAge)
+        .average().getAsDouble();
   }
 
   /**
    * Sequentially computes the most common first name out of all students that are no longer active
    * in the class using loops.
    *
-   * @param studentArray Student data for the class.
+   * @param studentArray Student data for the class
    * @return Most common first name of inactive students
    */
-  public String mostCommonFirstNameOfInactiveStudentsImperative(
-      final Student[] studentArray) {
-    List<Student> inactiveStudents = new ArrayList<Student>();
+  public String mostCommonFirstNameOfInactiveStudentsImperative(final Student[] studentArray) {
+    List<Student> inactiveStudents = new ArrayList<>();
 
     for (Student s : studentArray) {
       if (!s.checkIsCurrent()) {
@@ -65,12 +63,11 @@ public final class StudentAnalytics {
       }
     }
 
-    Map<String, Integer> nameCounts = new HashMap<String, Integer>();
+    Map<String, Integer> nameCounts = new HashMap<>();
 
     for (Student s : inactiveStudents) {
       if (nameCounts.containsKey(s.getFirstName())) {
-        nameCounts.put(s.getFirstName(),
-            new Integer(nameCounts.get(s.getFirstName()) + 1));
+        nameCounts.put(s.getFirstName(), nameCounts.get(s.getFirstName()) + 1);
       } else {
         nameCounts.put(s.getFirstName(), 1);
       }
@@ -84,34 +81,35 @@ public final class StudentAnalytics {
         mostCommonCount = entry.getValue();
       }
     }
-
     return mostCommon;
   }
 
   /**
-   * TODO compute the most common first name out of all students that are no
-   * longer active in the class using parallel streams. This should mirror the
-   * functionality of mostCommonFirstNameOfInactiveStudentsImperative. This
-   * method should not use any loops.
+   * Compute the most common first name out of all students that are no longer active in the class
+   * using parallel streams. This should mirror the functionality of
+   * mostCommonFirstNameOfInactiveStudentsImperative. This method should not use any loops.
    *
-   * @param studentArray Student data for the class.
+   * @param studentArray Student data for the class
    * @return Most common first name of inactive students
    */
-  public String mostCommonFirstNameOfInactiveStudentsParallelStream(
-      final Student[] studentArray) {
-    throw new UnsupportedOperationException();
+  public String mostCommonFirstNameOfInactiveStudentsParallelStream(final Student[] studentArray) {
+    Stream<Student> inactiveStudentsStream = Stream.of(studentArray).parallel()
+        .filter(s -> !s.checkIsCurrent());
+    Map<String, Integer> nameCounts = inactiveStudentsStream.collect(
+        Collectors.groupingBy(Student::getFirstName, Collectors.summingInt(n -> 1)));
+    return nameCounts.keySet().stream().parallel()
+        .max(Comparator.comparing(nameCounts::get)).get();
   }
 
   /**
    * Sequentially computes the number of students who have failed the course who are also older than
    * 20 years old. A failing grade is anything below a 65. A student has only failed the course if
-   * they have a failing grade and they are not currently active.
+   * they have a failing grade, and they are not currently active.
    *
-   * @param studentArray Student data for the class.
-   * @return Number of failed grades from students older than 20 years old.
+   * @param studentArray Student data for the class
+   * @return Number of failed grades from students older than 20 years old
    */
-  public int countNumberOfFailedStudentsOlderThan20Imperative(
-      final Student[] studentArray) {
+  public int countNumberOfFailedStudentsOlderThan20Imperative(final Student[] studentArray) {
     int count = 0;
     for (Student s : studentArray) {
       if (!s.checkIsCurrent() && s.getAge() > 20 && s.getGrade() < 65) {
@@ -122,18 +120,18 @@ public final class StudentAnalytics {
   }
 
   /**
-   * TODO compute the number of students who have failed the course who are
-   * also older than 20 years old. A failing grade is anything below a 65. A
-   * student has only failed the course if they have a failing grade and they
-   * are not currently active. This should mirror the functionality of
-   * countNumberOfFailedStudentsOlderThan20Imperative. This method should not
-   * use any loops.
+   * Compute the number of students who have failed the course who are also older than 20 years old.
+   * A failing grade is anything below a 65. A student has only failed the course if they have a
+   * failing grade, and they are not currently active. This should mirror the functionality of
+   * countNumberOfFailedStudentsOlderThan20Imperative. This method should not use any loops.
    *
-   * @param studentArray Student data for the class.
-   * @return Number of failed grades from students older than 20 years old.
+   * @param studentArray Student data for the class
+   * @return Number of failed grades from students older than 20 years old
    */
-  public int countNumberOfFailedStudentsOlderThan20ParallelStream(
-      final Student[] studentArray) {
-    throw new UnsupportedOperationException();
+  public int countNumberOfFailedStudentsOlderThan20ParallelStream(final Student[] studentArray) {
+    return Stream.of(studentArray).parallel()
+        .filter(s -> !s.checkIsCurrent() && s.getAge() > 20 && s.getGrade() < 65).mapToInt(s -> 1)
+        .sum();
   }
+
 }
